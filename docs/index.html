@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Coleta IFRS v2</title>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; connect-src https://pkmgknsijzkdmzsgeqrb.supabase.co; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; img-src 'self'; style-src 'self' 'unsafe-inline'">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px;max-width:720px}
+    fieldset{border:1px solid #ddd;border-radius:12px;padding:16px;margin:0 0 16px}
+    label{display:block;margin:8px 0 4px}
+    input,textarea,button{width:100%;padding:10px;border:1px solid #ccc;border-radius:10px}
+    button{cursor:pointer}
+    .muted{color:#666;font-size:.9rem}.ok{color:#0a0}.err{color:#a00}
+  </style>
+</head>
+<body>
+  <h1>Coleta IFRS</h1>
+
+  <form id="kpi-form" enctype="multipart/form-data" novalidate>
+    <fieldset>
+      <legend>Indicadores</legend>
+      <label>Água (m³)</label><input type="text" name="kpis[agua]" inputmode="decimal" required>
+      <label>Energia (kWh)</label><input type="text" name="kpis[energia]" inputmode="decimal" required>
+      <label>Observações / narrativa</label><textarea name="narrative" rows="4" required></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>Evidência (PDF/JPG/PNG até 10 MB)</legend>
+      <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" required>
+    </fieldset>
+
+    <div class="cf-turnstile" data-sitekey="TURNSTILE_SITE_KEY"></div>
+
+    <button type="submit">Enviar</button>
+    <p id="status" role="status" aria-live="polite" class="muted"></p>
+  </form>
+
+  <p class="muted">
+    <strong>LGPD.</strong> Os dados (incl. IP e user-agent para auditoria) serão usados apenas para reporte IFRS/ESG,
+    com acesso restrito e logs. Contato: <a href="mailto:dpo@environpact.com.br">dpo@environpact.com.br</a>.
+  </p>
+
+  <script>
+    const SUPABASE_URL = "https://pkmgknsijzkdmzsgeqrb.supabase.co";
+    const ANON_KEY = "SEU_ANON_KEY";
+    const t = new URLSearchParams(location.search).get("t");
+    const statusEl = document.getElementById("status");
+    if (!t) { statusEl.textContent = "Link inválido (token ausente)."; statusEl.className="err"; }
+
+    const form = document.getElementById("kpi-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!t) return;
+      const btn = e.submitter || form.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+      try {
+        const turnstileToken = window.turnstile && turnstile.getResponse();
+        if (!turnstileToken) throw new Error("Valide o CAPTCHA.");
+        const fd = new FormData(form);
+        fd.append("token", t);
+        fd.append("turnstile", turnstileToken);
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/submit_response`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${ANON_KEY}` },
+          body: fd
+        });
+        if (!res.ok) throw new Error(await res.text());
+        statusEl.textContent = "Resposta registrada com sucesso."; statusEl.className = "ok";
+        form.reset(); if (window.turnstile) turnstile.reset();
+      } catch (err) {
+        statusEl.textContent = "Falha ao enviar: " + (err?.message || err); statusEl.className = "err";
+        if (btn) btn.disabled = false;
+      }
+    });
+  </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</body>
+</html>
