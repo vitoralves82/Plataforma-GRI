@@ -33,7 +33,7 @@
       <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" required>
     </fieldset>
 
-    <div class="cf-turnstile" data-sitekey="TURNSTILE_SITE_KEY"></div>
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAABzxIx30G-UtGQbv"></div>
 
     <button type="submit">Enviar</button>
     <p id="status" role="status" aria-live="polite" class="muted"></p>
@@ -46,7 +46,7 @@
 
   <script>
     const SUPABASE_URL = "https://pkmgknsijzkdmzsgeqrb.supabase.co";
-    const ANON_KEY = "SEU_ANON_KEY";
+    const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbWdrbnNpanprZG16c2dlcXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxOTM1NDYsImV4cCI6MjA3Mjc2OTU0Nn0.7k5bAH-6LQICcmsdec911FTz121g0XMDdQbRkM0Ua64";
     const t = new URLSearchParams(location.search).get("t");
     const statusEl = document.getElementById("status");
     if (!t) { statusEl.textContent = "Link inválido (token ausente)."; statusEl.className="err"; }
