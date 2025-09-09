@@ -1,0 +1,57 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coleta IFRS – MVP</title>
+
+<!-- CSP básica p/ Pages + Supabase -->
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self'; connect-src https://SEU_PROJETO.supabase.co; img-src 'self'; frame-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
+<meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+
+<body>
+<form id="kpi-form">
+  <input name="kpis[agua]" required placeholder="Água (m³)">
+  <input name="kpis[energia]" required placeholder="Energia (kWh)">
+  <textarea name="narrative" required placeholder="Contexto"></textarea>
+  <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" required>
+  <!-- honeypot anti-bot simples -->
+  <input type="text" name="website" style="display:none">
+  <button type="submit">Enviar</button>
+</form>
+
+<script>
+const SUPABASE_URL = "https://SEU_PROJETO.supabase.co";
+const ANON_KEY = "SEU_ANON_KEY"; // ok expor; RLS protege
+const t = new URLSearchParams(location.search).get("t");
+
+const form = document.getElementById("kpi-form");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const hp = new FormData(form).get("website"); if (hp) return alert("Bloqueado");
+  const btn = e.submitter || form.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+
+  const fd = new FormData(form);
+  fd.append("token", t);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/submit_response`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${ANON_KEY}` },
+      body: fd
+    });
+    if (!res.ok) throw new Error(await res.text());
+    alert("Resposta registrada com sucesso.");
+    form.reset();
+  } catch (err) {
+    alert("Falha ao enviar: " + err.message);
+    if (btn) btn.disabled = false;
+  }
+});
+</script>
+
+<footer style="margin-top:1rem;font:12px/1.4 system-ui">
+  Esta página destina-se à coleta interna para reporte IFRS/ESG.
+  Dados usados apenas para essa finalidade, com acesso restrito e logs.
+  Direitos do titular: <a href="mailto:dpo@environpact.com.br">dpo@environpact.com.br</a>.
+</footer>
+</body></html>
