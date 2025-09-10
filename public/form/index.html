@@ -1,53 +1,26 @@
-<!doctype html><html lang="pt-br"><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html>
+<meta charset="utf-8" />
+<title>Formulário IFRS — teste</title>
+
+<!-- CSP segura: sem script inline; permite conectar no Supabase -->
 <meta http-equiv="Content-Security-Policy"
-content="default-src 'self';
-         connect-src https://pkmgknsijzkdmzsgeqrb.supabase.co;
-         img-src 'self' blob: data:;
-         style-src 'self' 'unsafe-inline';
-         script-src 'self';
-         frame-ancestors 'none'">
-<title>Coleta IFRS – MVP</title>
-<body>
-  <h1>Formulário IFRS – teste</h1>
-  <form id="kpi-form">
-    <label>Água (m³) <input name="kpis[agua]" required inputmode="decimal"></label><br>
-    <label>Energia (kWh) <input name="kpis[energia]" required inputmode="decimal"></label><br>
-    <label>Narrativa <textarea name="narrative" required></textarea></label><br>
-    <label>Evidência (PDF/JPG/PNG, até 10MB) <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" required></label><br>
-    <button type="submit">Enviar</button>
-  </form>
-  <pre id="out" style="background:#111;color:#0f0;padding:8px;"></pre>
+      content="default-src 'self';
+               connect-src https://pkmgknsijzkdmzsgeqrb.supabase.co;
+               img-src 'self' data: blob:;
+               style-src 'self' 'unsafe-inline';
+               script-src 'self';">
 
-<script>
-const SUPABASE_URL = "https://pkmgknsijzkdmzsgeqrb.supabase.co";
-const ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbWdrbnNpanprZG16c2dlcXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxOTM1NDYsImV4cCI6MjA3Mjc2OTU0Nn0.7k5bAH-6LQICcmsdec911FTz121g0XMDdQbRkM0Ua64";
+<form id="f" enctype="multipart/form-data">
+  <label>Água (m³) <input name="kpis[agua]" type="number" required></label>
+  <label>Energia (kWh) <input name="kpis[energia]" type="number" required></label>
+  <label>Narrativa <textarea name="narrative"></textarea></label>
+  <label>Evidência (PDF/JPG/PNG, até 10MB)
+    <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png">
+  </label>
+  <button type="submit">Enviar</button>
+</form>
 
-const token = new URLSearchParams(location.search).get("t");
-const out = document.getElementById("out");
-const form = document.getElementById("kpi-form");
+<pre id="out"></pre>
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if(!token){ out.textContent = "Falta ?t=TOKEN na URL"; return; }
-  const btn = e.submitter; if(btn) btn.disabled = true;
-
-  try{
-    const fd = new FormData(form);
-    fd.append("token", token);
-
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/submit_response`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${ANON_KEY}` },
-      body: fd
-    });
-
-    const text = await res.text();
-    out.textContent = `HTTP ${res.status}\n${text}`;
-    if(res.ok){ form.reset(); }
-  }catch(err){
-    out.textContent = `Erro de rede: ${err.message}`;
-  }finally{ if(btn) btn.disabled = false; }
-});
-</script>
-</body></html>
+<!-- JS EXTERNO (nada inline) -->
+<script src="./app.js" defer></script>
