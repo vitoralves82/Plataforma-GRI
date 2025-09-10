@@ -1,57 +1,53 @@
-<!doctype html><html lang="pt-BR"><meta charset="utf-8">
+<!doctype html><html lang="pt-br"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Coleta IFRS – MVP</title>
-
-<!-- CSP básica p/ Pages + Supabase -->
 <meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; connect-src https://SEU_PROJETO.supabase.co; img-src 'self'; frame-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'">
-<meta http-equiv="Referrer-Policy" content="no-referrer">
-<meta http-equiv="Permissions-Policy" content="interest-cohort=()">
-
+content="default-src 'self';
+         connect-src https://pkmgknsijzkdmzsgeqrb.supabase.co;
+         img-src 'self' blob: data:;
+         style-src 'self' 'unsafe-inline';
+         script-src 'self';
+         frame-ancestors 'none'">
+<title>Coleta IFRS – MVP</title>
 <body>
-<form id="kpi-form">
-  <input name="kpis[agua]" required placeholder="Água (m³)">
-  <input name="kpis[energia]" required placeholder="Energia (kWh)">
-  <textarea name="narrative" required placeholder="Contexto"></textarea>
-  <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" required>
-  <!-- honeypot anti-bot simples -->
-  <input type="text" name="website" style="display:none">
-  <button type="submit">Enviar</button>
-</form>
+  <h1>Formulário IFRS – teste</h1>
+  <form id="kpi-form">
+    <label>Água (m³) <input name="kpis[agua]" required inputmode="decimal"></label><br>
+    <label>Energia (kWh) <input name="kpis[energia]" required inputmode="decimal"></label><br>
+    <label>Narrativa <textarea name="narrative" required></textarea></label><br>
+    <label>Evidência (PDF/JPG/PNG, até 10MB) <input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" required></label><br>
+    <button type="submit">Enviar</button>
+  </form>
+  <pre id="out" style="background:#111;color:#0f0;padding:8px;"></pre>
 
 <script>
 const SUPABASE_URL = "https://pkmgknsijzkdmzsgeqrb.supabase.co";
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbWdrbnNpanprZG16c2dlcXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxOTM1NDYsImV4cCI6MjA3Mjc2OTU0Nn0.7k5bAH-6LQICcmsdec911FTz121g0XMDdQbRkM0Ua64"; // ok expor; RLS protege
-const t = new URLSearchParams(location.search).get("t");
+const ANON_KEY     = "SEU_ANON_KEY";
 
+const token = new URLSearchParams(location.search).get("t");
+const out = document.getElementById("out");
 const form = document.getElementById("kpi-form");
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const hp = new FormData(form).get("website"); if (hp) return alert("Bloqueado");
-  const btn = e.submitter || form.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+  if(!token){ out.textContent = "Falta ?t=TOKEN na URL"; return; }
+  const btn = e.submitter; if(btn) btn.disabled = true;
 
-  const fd = new FormData(form);
-  fd.append("token", t);
+  try{
+    const fd = new FormData(form);
+    fd.append("token", token);
 
-  try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/submit_response`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${ANON_KEY}` },
       body: fd
     });
-    if (!res.ok) throw new Error(await res.text());
-    alert("Resposta registrada com sucesso.");
-    form.reset();
-  } catch (err) {
-    alert("Falha ao enviar: " + err.message);
-    if (btn) btn.disabled = false;
-  }
+
+    const text = await res.text();
+    out.textContent = `HTTP ${res.status}\n${text}`;
+    if(res.ok){ form.reset(); }
+  }catch(err){
+    out.textContent = `Erro de rede: ${err.message}`;
+  }finally{ if(btn) btn.disabled = false; }
 });
 </script>
-
-<footer style="margin-top:1rem;font:12px/1.4 system-ui">
-  Esta página destina-se à coleta interna para reporte IFRS/ESG.
-  Dados usados apenas para essa finalidade, com acesso restrito e logs.
-  Direitos do titular: <a href="mailto:dpo@environpact.com.br">dpo@environpact.com.br</a>.
-</footer>
 </body></html>
